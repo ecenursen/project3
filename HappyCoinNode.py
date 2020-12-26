@@ -178,16 +178,27 @@ class HappyCoinNode(threading.Thread):
 
     def received_message(self, node, data):
         if data["func"] == "request_blocks":
-            print("request blocks")
+            self.send_blocks(node)
         elif data["func"] == "new_transaction":
             self.add_newtransaction(data["trans"])
         elif data["func"] == "new_block":
             self.add_newblock(data["block"])
+        elif data["func"] == "start_sending_blocks" or data["func"] == "end_sending_blocks":
+            print("Blocks incoming")
         else:
             print("Unknown message:",data)
-
-
         print("Incoming message from:",node.port," to me:",self.port,"-",str(data))
+
+    def send_blocks(self,node):
+        data = {"func": "start_sending_blocks"}
+        self.send_to_node(node,data)
+        time.sleep(0.2)
+        for block in self.blocks:
+            self.send_to_node(node,{"func":"new_block","block":block})
+            time.sleep(0.2)
+        data = {"func": "end_sending_blocks"}
+        self.send_to_node(node,data)
+
 
     def __str__(self):
         return 'HappyCoinNode: {}:{}'.format(self.host, self.port)

@@ -50,7 +50,9 @@ class HappyCoinConnection(threading.Thread):
 
             if incoming_data != b'':
                 decoded_data = incoming_data.decode('utf-8')
+                print(type(decoded_data),"decodeddata:",decoded_data)
                 send_data = json.loads(decoded_data)
+                print(type(send_data),"senddata:",send_data)
                 self.main_node.received_message( self, send_data)
 
             time.sleep(0.01)

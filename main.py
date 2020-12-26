@@ -3,8 +3,8 @@ from tkinter import *
 from time import sleep
 
 current_IP = "192.168.1.129"  
-available_ports = [12000,3000,4000] 
-LARGEFONT =("Verdana", 35) 
+current_port = 4000
+peers = []
 transactions = [["nsbdszfsddnf","kjbxfhdfhdfkjh","kknklm","kjbkjh","kknklm","kjbkjh","kknklm","kjbkjh","kknklm"], ["nsbdnf","kjbkjh","kknklm","kjbkjh","kknklm","kjbkjh","kknklm","kjbkjh","kknklm"], ["nsbdnf","kjbkjh","kknklm","kjbkjh","kknklm","kjbkjh","kknklm","kjbkjh","kknklm"], ["nsbdnf","kjbkjh","kknklm","kjbkjh","kknklm","kjbkjh","kknklm","kjbkjh","kknklm"], ["nsbdnf","kjbkjh","kknklm","kjbkjh","kknklm","kjbkjh","kknklm","kjbkjh","kknklm"], ["nsbdnf","kjbkjh","kknklm","kjbkjh","kknklm","kjbkjh","kknklm","kjbkjh","kknklm"], ["nsbdnf","kjbkjh","kknklm","kjbkjh","kknklm","kjbkjh","kknklm","kjbkjh","kknklm"], ["nsbdnf","kjbkjh","kknklm","kjbkjh","kknklm","kjbkjh","kknklm","kjbkjh","kknklm"], ["nsbdnf","kjbkjh","kknklm","kjbkjh","kknklm","kjbkjh","kknklm","kjbkjh","kknklm"], ["nsbdnf","kjbkjh","kknklm","kjbkjh","kknklm","kjbkjh","kknklm","kjbkjh","kknklm"], ["nsbdnf","kjbkjh","kknklm","kjbkjh","kknklm","kjbkjh","kknklm","kjbkjh","kknklm"], ["nsbdnf","kjbkjh","kknklm","kjbkjh","kknklm","kjbkjh","kknklm","kjbkjh","kknklm"], ["nsbdnf","kjbkjh","kknklm","kjbkjh","kknklm","kjbkjh","kknklm","kjbkjh","kknklm"]]
 class HappyCoin_App(Tk):
 
@@ -39,10 +39,10 @@ class StartPage(Frame):
         self.tkraise()
         info_label = Label(self,text="Collecting history from peers, please wait..")
         info_label.grid(row=0,column=0)
+        
+        start_peering()
+        self.cont.show_frame(BalanceInfo)
 
-        button1 = Button(self, text ="StartNode", 
-        command = lambda : self.cont.show_frame(BalanceInfo)) 
-        button1.grid(row = 1, column = 0, pady=(0,0))
     
 class BalanceInfo(Frame): 
 
@@ -225,10 +225,14 @@ class Blocks(Frame):
 
         block_table.config(scrollregion=block_table.bbox("all"))
         
-     
+def start_peering():
+    for peer in peers:
+        node.connect_to_node(current_IP,peer)
+    node.send_to_nodes({"func":"request_blocks"})
+    return 
 
 if __name__=="__main__":
-    node = HappyCoinNode(current_IP,available_ports[0])
+    node = HappyCoinNode(current_IP,current_port)
     node.start()
     app = HappyCoin_App() 
     app.title("HappyCoin")
