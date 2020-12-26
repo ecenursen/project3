@@ -1,26 +1,26 @@
 from hashlib import sha256
 import time
 from block import *
-from transactions import Transaction
+from transactions import *
 
-class Blokchain:
+class Blockchain:
     # Class Constructor
     def __init__(self):
         self.blocks = []                    # To store all the blocks(chain)
         self.unconfirmedTrans = []          # To store unconfrimed Transactions  
         self.completedTrans = []            # To store done Transactions
-        self.cons_initial_block()            # Calling the function to create the first block
+        self.cons_initial_block()           # Calling the function to create the first block
     
     # The function for creating new blocks
     def create_block(self, proofNo, prevBlockHash):
         newBlock = Block(
             index = len(self.blocks),                   # The index of the new block
-            transData = self.completedTrans,            
+            transData = self.unconfirmedTrans,            
             prevBlockHash = prevBlockHash,
             proofNo = proofNo,
             timeStamp = time.time()
         )
-        self.completedTrans = []
+        self.unconfirmedTrans = []
         # Adding new block to Chain
         self.blocks.append(newBlock)
         return newBlock
@@ -56,7 +56,7 @@ class Blokchain:
     @staticmethod
     def proof_checker(lastProof):
         proofNo = 0
-        while Blokchain.proof_verifier(proofNo, lastProof) is False:
+        while Blockchain.proof_verifier(proofNo, lastProof) is False:
             proofNo += 1
 
         return proofNo
@@ -73,3 +73,6 @@ class Blokchain:
     def latest_block(self):
         return self.blocks[-1]
 
+    # The function to get Hash of the latest block
+    def latest_block_hash(self):
+        return self.latest_block.blockHash
