@@ -22,6 +22,7 @@ class HappyCoinNode(threading.Thread):
 
         #for saving the blocks
         self.blocks = []
+        self.unadded_transaction = []
 
         addr = hashlib.sha512()
         t = self.host + str(self.port) + str(random.randint(1, 99999999))
@@ -35,18 +36,59 @@ class HappyCoinNode(threading.Thread):
         self.sock.settimeout(12.0)
         self.sock.listen(12)
 
+    # function for returning the blocks that node has
+    def return_blocks(self):
+        return self.blocks
+
+    #function for returning the unadded_transaction that node has 
+    def return_unadded_transactions(self):
+        return self.unadded_transaction
+
+    # function for removing transactions from unadded_transaction list 
+    # if transaction is already added to  confirmed block
+    def remove_added_transactions(self):
+        for block in self.blocks:
+            for transed in block["trans"]:
+                if transed in self.unadded_transaction:
+                    self.unadded_transaction.remove(transed)
+
+    #function for saving newly created but not added to block transaction to node
+    def add_newtransaction(self,new_trans):
+
+        for trans in self.unadded_transaction:
+            if new_trans['t_id'] == trans["t_id"]:
+                print("Transaction is already added")
+                return
+
+        for trans in self.unadded_transaction:
+            if new_trans["t_fee"] > trans["t_fee"]:
+                self.unadded_transaction.insert(self.unadded_transaction.index(trans),new_trans)
+                return
+
+        self.unadded_transaction.append(new_trans)
+
+    #function for adding new block to node memory
+    def add_newblock(self,newblock):
+        for block in self.blocks:
+            if newblock['b_hash'] == block["b_hash"]:
+                print("Block is already included")
+                return
+
+        newblock["prev_b_hash"] = self.block['b_hash']
+        self.blocks["next_b_hash"] = newblock["b_hash"]
+        newblock["confirmations"] = 1
+        for block in self.blocks:
+            block["confirmations"] = block["confirmations"] + 1
+
     def delete_closed_connections(self):
         for n in self.nodes_connected:
             if n.awake.is_set():
                 n.join()
                 del self.nodes_connected[self.nodes_connected.index(n)]
 
-    def send_to_nodes(self, data, exclude=[]):
+    def send_to_nodes(self, data):
         for n in self.nodes_connected:
-            if n in exclude:
-                continue
-            else:
-                self.send_to_node(n, data)
+            self.send_to_node(n, data)
 
     def send_to_node(self, n, data):
         self.delete_closed_connections()
@@ -135,6 +177,16 @@ class HappyCoinNode(threading.Thread):
         print("HappyCoinNode stopped")
 
     def received_message(self, node, data):
+        if data["func"] == "request_blocks":
+            print("request blocks")
+        elif data["func"] == "new_transaction":
+            self.add_newtransaction(data["trans"])
+        elif data["func"] == "new_block":
+            self.add_newblock(data["block"])
+        else:
+            print("Unknown message:",data)
+
+
         print("Incoming message from:",node.port," to me:",self.port,"-",str(data))
 
     def __str__(self):

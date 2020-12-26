@@ -2,13 +2,10 @@ from HappyCoinNode import HappyCoinNode
 from tkinter import *
 from time import sleep
 
-current_IP2 = "192.168.1.120"   
-current_IP = ''
-available_ports = [12000,3000,4000]    
-current_port = 4000   
+current_IP = "192.168.1.129"  
+available_ports = [12000,3000,4000] 
 LARGEFONT =("Verdana", 35) 
-transactions = [["nsbdnf","kjbkjh","kknklm"],["nsbdnf","kjbkjh","kknklm"],["nsbdnf","kjbkjh","kknklm"],["nsbdnf","kjbkjh","kknklm"],["nsbdnf","kjbkjh","kknklm"],["nsbdnf","kjbkjh","kknklm"]]
-
+transactions = [["nsbdszfsddnf","kjbxfhdfhdfkjh","kknklm","kjbkjh","kknklm","kjbkjh","kknklm","kjbkjh","kknklm"], ["nsbdnf","kjbkjh","kknklm","kjbkjh","kknklm","kjbkjh","kknklm","kjbkjh","kknklm"], ["nsbdnf","kjbkjh","kknklm","kjbkjh","kknklm","kjbkjh","kknklm","kjbkjh","kknklm"], ["nsbdnf","kjbkjh","kknklm","kjbkjh","kknklm","kjbkjh","kknklm","kjbkjh","kknklm"], ["nsbdnf","kjbkjh","kknklm","kjbkjh","kknklm","kjbkjh","kknklm","kjbkjh","kknklm"], ["nsbdnf","kjbkjh","kknklm","kjbkjh","kknklm","kjbkjh","kknklm","kjbkjh","kknklm"], ["nsbdnf","kjbkjh","kknklm","kjbkjh","kknklm","kjbkjh","kknklm","kjbkjh","kknklm"], ["nsbdnf","kjbkjh","kknklm","kjbkjh","kknklm","kjbkjh","kknklm","kjbkjh","kknklm"], ["nsbdnf","kjbkjh","kknklm","kjbkjh","kknklm","kjbkjh","kknklm","kjbkjh","kknklm"], ["nsbdnf","kjbkjh","kknklm","kjbkjh","kknklm","kjbkjh","kknklm","kjbkjh","kknklm"], ["nsbdnf","kjbkjh","kknklm","kjbkjh","kknklm","kjbkjh","kknklm","kjbkjh","kknklm"], ["nsbdnf","kjbkjh","kknklm","kjbkjh","kknklm","kjbkjh","kknklm","kjbkjh","kknklm"], ["nsbdnf","kjbkjh","kknklm","kjbkjh","kknklm","kjbkjh","kknklm","kjbkjh","kknklm"]]
 class HappyCoin_App(Tk):
 
     def __init__(self, *args, **kwargs):  
@@ -68,13 +65,13 @@ class BalanceInfo(Frame):
         for widget in self.winfo_children():
             widget.destroy()
 
-        button1 = Button(self, text ="BalanceInfo", 
+        button1 = Button(self, text ="BalanceInfo", relief="sunken", 
         command = lambda : self.cont.show_frame(BalanceInfo)) 
         button1.grid(row = 0, column = 0, pady=(0,0))
-        button2 = Button(self, text ="UserTransactions", 
+        button2 = Button(self, text ="UserTransactions", relief="raised", 
         command = lambda : self.cont.show_frame(UserTransactions)) 
         button2.grid(row = 0, column = 1, pady=(0,0))
-        button3 = Button(self, text ="Blocks", 
+        button3 = Button(self, text ="Blocks", relief="raised", 
         command = lambda : self.cont.show_frame(Blocks)) 
         button3.grid(row = 0, column = 2, pady=(0,0))
           
@@ -131,24 +128,51 @@ class UserTransactions(Frame):
         self.cont = controller
     
     def load(self):
+        
+        print("here i am")
         self.tkraise()
-
         for widget in self.winfo_children():
             widget.destroy()
 
-        button1 = Button(self, text ="BalanceInfo", 
+        button1 = Button(self, text ="BalanceInfo",relief=RAISED, 
         command = lambda : self.cont.show_frame(BalanceInfo)) 
         button1.grid(row = 0, column = 0, pady=(0,0))
-        button2 = Button(self, text ="UserTransactions", 
+        button2 = Button(self, text ="UserTransactions", relief=SUNKEN, 
         command = lambda : self.cont.show_frame(UserTransactions)) 
         button2.grid(row = 0, column = 1, pady=(0,0))
-        button3 = Button(self, text ="Blocks", 
+        button3 = Button(self, text ="Blocks", relief=RAISED, 
         command = lambda : self.cont.show_frame(Blocks)) 
         button3.grid(row = 0, column = 2, pady=(0,0))
 
         transaction_area = Frame(self)
         transaction_area.grid(row=2,columnspan=3,pady=(5,0),sticky='nw')
 
+        transaction_table = Canvas(transaction_area,bg="white",width=800,height=900)
+        transaction_table.grid(row=0,column=0,sticky="news")
+
+        scroll_area = Scrollbar(transaction_area,orient="vertical", command=transaction_table.yview,)
+        scroll_area.grid(row=0,column=1,sticky="ns")
+        transaction_table.configure(yscrollcommand=scroll_area.set)
+        
+        table_frame = Frame(transaction_table,bg="blue")
+        transaction_table.create_window((0,0),window=table_frame,anchor="nw")
+
+        t_row = len(transactions)
+        if t_row != 0:
+            t_col = len(transactions[0])
+        else:
+            t_col = 0
+        labels = [[Label() for j in range(t_col)] for i in range(t_row)]
+
+        for i in range(0,t_row):
+            for j in range(0,t_col):
+                labels[i][j] = Label(table_frame,text=transactions[i][j])
+                labels[i][j].grid(row=i,column=j,sticky="news")
+
+        table_frame.update_idletasks()
+
+        transaction_table.config(scrollregion=transaction_table.bbox("all"))
+        
 
 class Blocks(Frame): 
     def __init__(self, parent, controller):  
@@ -162,54 +186,54 @@ class Blocks(Frame):
         for widget in self.winfo_children():
             widget.destroy()
 
-        button1 = Button(self, text ="BalanceInfo", 
+        button1 = Button(self, text ="BalanceInfo", relief=RAISED, 
         command = lambda : self.cont.show_frame(BalanceInfo)) 
         button1.grid(row = 0, column = 0, pady=(0,0))
-        button2 = Button(self, text ="UserTransactions", 
+        button2 = Button(self, text ="UserTransactions", relief=RAISED, 
         command = lambda : self.cont.show_frame(UserTransactions)) 
         button2.grid(row = 0, column = 1, pady=(0,0))
-        button3 = Button(self, text ="Blocks", 
+        button3 = Button(self, text ="Blocks", relief=SUNKEN, 
         command = lambda : self.cont.show_frame(Blocks)) 
         button3.grid(row = 0, column = 2, pady=(0,0))
 
-        frame_scrollbar = Frame(self)
-        frame_scrollbar.grid(row=2,columnspan=3,pady=(5,0),sticky='nw')
-        frame_scrollbar.grid_rowconfigure(0, weight=1)
-        frame_scrollbar.grid_columnconfigure(0, weight=1)
-        frame_scrollbar.grid_propagate(False)
+        block_area = Frame(self)
+        block_area.grid(row=2,columnspan=3,pady=(5,0),sticky='nw')
 
-        canvas = Canvas(frame_scrollbar,bg="yellow")
-        scrollbar = Scrollbar(frame_scrollbar,orient="vertical",command=canvas.yview)
-        scrollbar.grid(row=0,column=1,sticky="ns")
-        canvas.configure(yscrollcommand=scrollbar.set)
+        block_table = Canvas(block_area,bg="white",width=800,height=900)
+        block_table.grid(row=0,column=0,sticky="news")
 
-        frame_text = Frame(canvas,bg="blue")
-        canvas.create_window((0, 0), window=frame_text, anchor='nw')
-        labels = [Label() for i in range(10)]
+        scroll_area = Scrollbar(block_area,orient="vertical", command=block_table.yview,)
+        scroll_area.grid(row=0,column=1,sticky="ns")
+        block_table.configure(yscrollcommand=scroll_area.set)
+        
+        table_frame = Frame(block_table,bg="blue")
+        block_table.create_window((0,0),window=table_frame,anchor="nw")
 
-        for i in range(0,10):
-            texts = "TestingText" + str(i)
-            labels[i] = Label(frame_text, text =texts)
-            labels[i].grid(row=i,column=0,sticky="news")
+        t_row = len(transactions)
+        if t_row != 0:
+            t_col = len(transactions[0])
+        else:
+            t_col = 0
+        labels = [[Label() for j in range(t_col)] for i in range(t_row)]
+      
+        for i in range(0,t_row):
+            for j in range(0,t_col):
+                labels[i][j] = Label(table_frame,text=transactions[i][j])
+                labels[i][j].grid(row=i,column=j,sticky="news")
 
-        frame_text.update_idletasks()
+        table_frame.update_idletasks()
 
-        first5rows_height = sum([labels[i].winfo_height() for i in range(0, 5)])
-        frame_scrollbar.config(width= scrollbar.winfo_width(),height=first5rows_height)
-
-        canvas.config(scrollregion=canvas.bbox("all"))
-
-        button_send = Button(self,text="SEND",command=self.send_messagez)
-        button_send.grid(row=5,column=1,padx = 20, pady = 10)
+        block_table.config(scrollregion=block_table.bbox("all"))
         
      
-    
 
-app = HappyCoin_App() 
-app.title("HappyCoin")
-app.grid_rowconfigure(0, weight=1)
-app.columnconfigure(0, weight=1)
-app.mainloop() 
+if __name__=="__main__":
+    node = HappyCoinNode(current_IP,available_ports[0])
+    node.start()
+    app = HappyCoin_App() 
+    app.title("HappyCoin")
+    app.mainloop() 
+    node.stop()
 
 """
 node1 = HappyCoinNode(current_IP2,available_ports[0])
