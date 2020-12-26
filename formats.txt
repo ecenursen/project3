@@ -1,0 +1,68 @@
+transaction:
+
+{
+
+    "t_id": "jaskjnasf",
+    "t_sender" : "public key of sender",
+    "t_receiver": "public key of receiver"
+    "t_amount" : "sent amount",
+    "block_reward": "1/0",
+    "t_fee" : "fee amount, minimum 0.01 Happy Coin",
+    "t_time" : "unix timestamp creation of transaction"
+
+}
+
+block:
+
+{
+    "b_hash" : "block hash",
+    "b_time" : "time of creation of block",
+    "t_no" : "number of transaction that block includes",
+    "trans": [transaction,transaction ...],
+    "confirmations" : "number of blocks built upon"
+    "prev_b_hash" : "hash of previous block",
+    "next_b_hash" : "hash of next block"
+    
+}
+
+network messages struct
+
+{
+    "func": "name of function",
+    "param" : "parameters"
+}
+
+
+
+request_blocks when connecteed
+
+{
+    "func" : "request_blocks"
+}
+
+answer for request blocks
+
+{
+    "answer": "start_sending_blocks"
+}
+block
+block 
+block
+
+{
+    "answer" : "end_sending_blocks"
+}
+
+posting_new_transaction
+
+{
+    "func" : "new_transaction",
+    "trans" : transaction
+}
+
+posting_new_block
+
+{
+    "func" : "new_block",
+    "block" : block
+}
