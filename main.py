@@ -5,9 +5,10 @@ import secrets
 from block import Block
 from transactions import Transaction
 from blockchain import Blockchain
+import secrets
 
 #some static variables for ip and ports
-current_IP = "192.168.1.117"  
+current_IP = "192.168.202.1"  
 current_port = 4000
 peers = []
 
