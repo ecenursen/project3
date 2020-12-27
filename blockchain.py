@@ -2,7 +2,7 @@ from hashlib import sha256
 import time
 from block import *
 from transactions import Transaction
-
+import bitcoin_keygen
 import secrets
 
 class Blockchain:
@@ -35,38 +35,12 @@ class Blockchain:
                 self.unconfirmedTrans.remove(self.unconfirmedTrans[i])
 
         return transactions
-    
-    # The function for creating new blocks
-    def create_block(self, myAddress):
-        # Checking whether there is enough transaction to create new block
-        if not self.trans_selector(myAddress):
-            return False
-
-        
-        # Creating new block
-        transData = self.trans_selector(myAddress)
-        timestamp = time.time()
-        newBlock = Block(
-            transData=transData,
-            prevBlockHash=self.blocks[-1].blockHash,
-            proofNo=self.proof_checker(self.blocks[-1].proofNo),
-            timestamp=timestamp,
-            transNum=len(transData),
-            blockHash = Block.generate_hash(transData,timestamp),
-        )
-            
-        # Incrementing confirmation number for other old blocks
-        for block in self.blocks:
-            block.confirmations += 1
-        # Adding new block to Chain
-        self.blocks.append(newBlock)
-        return newBlock
 
     # The function for creating first block in chain
     def cons_initial_block(self):
         timestamp = time.time()
-        blockHash = Block.generate_hash("First Block",timestamp)
-        self.blocks.append(Block("First Block",0,0,timestamp,0,blockHash))
+        blockHash = Block.generate_hash("First Block",timestamp,1)
+        self.blocks.append(Block("First Block",0,timestamp,0,blockHash))
     
     # The function to check validity of all blocks in the chain
     def validity_checker(self):
@@ -90,23 +64,6 @@ class Blockchain:
     # The function to add new transaction
     def add_transaction(self, transaction):
         self.unconfirmedTrans.append(transaction)
-    
-    # The function to prevent the blockchain from abuse
-    @staticmethod
-    def proof_checker(lastProof):
-        proofNo = 0
-        while Blockchain.proof_verifier(proofNo, lastProof) is False:
-            proofNo += 1
-
-        return proofNo
-
-    # The function to check the proof
-    @staticmethod
-    def proof_verifier(lastProof, proof):
-        guess = lastProof + proof
-        guess = guess.encode()
-        guessHash = sha256(guess).hexdigest()
-        return guessHash[:4] == "0000"
     
     # The function to get the latest block of the chain
     def latest_block(self):
@@ -162,7 +119,7 @@ class Blockchain:
                 for transBlock in block.transData:
                     if(transNewBlock.transID == transBlock.transID):
                         return False
-
+    
         # Checking there is any same transaction with chain and new block
         for transBlock in newBlock.transData:
             for transChain in self.unconfirmedTrans:
@@ -176,5 +133,70 @@ class Blockchain:
         newBlock.confirmations = 1   
         self.blocks.append(newBlock)           
         return True
+    
+    #function for adding transaction from outside
+    def add_trans_outside(self,newTrans):
+        for block in self.blocks:
+            for trans in block.transData:
+                if newTrans.transID == trans.transID:
+                    return False
+
+        sender_balance = self.get_balance(newTrans.fromAddress,0)
+        if sender_balance < (newTrans.amount + newTrans.transFee):
+            return False
+        
+        self.add_transaction(newTrans)
+        return True
+
+    @staticmethod
+    # The function
+    def mine_block(transData, diffic):
+        difficCheck = "0" * diffic
+        difficInc = 0
+        blockHash = Block.generate_hash(transData,time.time(),difficInc)
+        while blockHash[:diffic] != difficCheck:
+            blockHash = Block.generate_hash(transData, time.time(), difficInc)
+            difficInc += 1
+        return blockHash
+
+    def block_miner(self, minerAddress):
+        # Checking whether there is enough transaction to create new block
+        if not self.trans_selector(minerAddress):
+            return False
+        
+        # Getting 4+1 trans
+        transData = self.trans_selector(minerAddress)
+        # Finding block hash by iterating
+        blockHash = self.mine_block(transData,5)
+        newBlock = Block(
+            transData=transData,
+            prevBlockHash=self.blocks[-1].blockHash,
+            timestamp=time.time(),
+            transNum=len(transData),
+            blockHash=blockHash
+        )
+        # Incrementing confirmation number for other old blocks
+        for block in self.blocks:
+            block.confirmations += 1
+        # Adding new block to Chain
+        self.blocks.append(newBlock)
+
+        return newBlock
+
+def keys_address_generator():
+
+    # Private key generator
+    bits = secrets.randbits(256)
+    bitsHex = hex(bits)
+    privateKey = bitsHex[2:]
+    publicKey = bitcoin_keygen.private2public(privateKey)
+    address = bitcoin_keygen.public2address(publicKey)
+
+    return privateKey, publicKey, address
         
 
+
+privkey, publick, add = keys_address_generator()
+print(privkey)
+print(publick)
+print(add)

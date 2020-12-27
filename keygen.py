@@ -3,6 +3,15 @@ import hashlib
 import ecdsa
 import secrets
 import bitcoin_keygen
+from collections import OrderedDict
+
+import binascii
+
+import Crypto
+import Crypto.Random
+from Crypto.Hash import SHA
+from Crypto.PublicKey import RSA
+from Crypto.Signature import PKCS1_v1_5
 
 
 
@@ -95,6 +104,19 @@ def base58(address_hex):
     return b58_string
 
 
+def to_dict(sender_address="Joshgun", recipient_address="Ece", value=1000):
+    return OrderedDict({'sender_address': sender_address,
+                        'recipient_address': recipient_address,
+                        'value': value})
+
+
+def sign_transaction(privateKey):
+    private_key = RSA.importKey(
+        binascii.unhexlify(privateKey))
+    signer = PKCS1_v1_5.new(private_key)
+    h = SHA.new(str(to_dict()).encode('utf8'))
+    return binascii.hexlify(signer.sign(h)).decode('ascii')
+
 # Private key generator
 bits = secrets.randbits(256)
 bitsHex = hex(bits)
@@ -109,3 +131,7 @@ publick2 = bitcoin_keygen.private2public(privateKey)
 print(publick2)
 print(bitcoin_keygen.public2address(publick2))
 print(address)
+
+print("signedd: ", sign_transaction(privateKey) )
+
+
