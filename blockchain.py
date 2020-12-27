@@ -19,6 +19,7 @@ class Blockchain:
 
         transactions = []
         if(len(self.unconfirmedTrans) < 4):
+            print("less than 4 transaction")
             return transactions
         else:
             # Creating new amount value for Reward transaction
@@ -31,8 +32,8 @@ class Blockchain:
             
             # Selecting 4 transactions from the unconfirmed transaction to create new block
             for i in range(4):
-                transactions.append(self.unconfirmedTrans[i])
-                self.unconfirmedTrans.remove(self.unconfirmedTrans[i])
+                transactions.append(self.unconfirmedTrans[0])
+                self.unconfirmedTrans.remove(self.unconfirmedTrans[0])
 
         return transactions
 
@@ -164,9 +165,11 @@ class Blockchain:
         difficCheck = "0" * diffic
         difficInc = 0
         blockHash = Block.generate_hash(transData,time.time(),difficInc)
+        print("start finding hash")
         while blockHash[:diffic] != difficCheck:
             blockHash = Block.generate_hash(transData, time.time(), difficInc)
             difficInc += 1
+        print("found hash:",blockHash)
         return blockHash
 
     def block_miner(self, minerAddress):
@@ -189,6 +192,7 @@ class Blockchain:
         for block in self.blocks:
             block.confirmations += 1
         # Adding new block to Chain
+        print("newblock:",newBlock)
         self.blocks.append(newBlock)
 
         return newBlock
@@ -201,7 +205,6 @@ def keys_address_generator():
     privateKey = bitsHex[2:]
     publicKey = bitcoin_keygen.private2public(privateKey)
     address = bitcoin_keygen.public2address(publicKey)
-
     return privateKey, publicKey, address
         
 

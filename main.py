@@ -63,6 +63,8 @@ class BalanceInfo(Frame):
         else:
             if trans_fee == "" or trans_fee == " ":
                 trans_fee = 0.001
+            else:
+                trans_fee = float(trans_fee)
             newTrans = Transaction(fromAddress=node.addr,toAddress=recv_addr,amount=float(trans_amount),timestamp=time(),blockReward=0,transFee=trans_fee)
             node.create_transaction(newTrans)
         

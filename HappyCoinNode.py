@@ -111,6 +111,7 @@ class HappyCoinNode(threading.Thread):
                 self.nodes_connected.append(thread_client)
                 
             except socket.timeout:
+                self.blockchain.block_miner(self.addr)
                 print('HappyCoinNode: Connection timeout!')
 
             except Exception as e:
@@ -184,6 +185,8 @@ class HappyCoinNode(threading.Thread):
         for block in send_blocks:
             self.send_to_node(nodez,{"func":"new_block","block":block.block_to_dict()})
             time.sleep(0.2)
+        for trans in self.blockchain.unconfirmedTrans:
+            self.send_new_transaction(trans)
         data = {"func": "end_sending_blocks"}
         self.send_to_node(nodez,data)
 
