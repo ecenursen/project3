@@ -1,6 +1,8 @@
+import secrets
+
 
 class Transaction:
-    def __init__(self, transID, fromAddress, toAddress, amount, timestamp, blockReward, transFee=0.1):
+    def __init__(self, fromAddress, toAddress, amount, timestamp, blockReward, transID=secrets.randbits(64), transFee=0.01):
         self.transID = transID
         self.fromAddress = fromAddress
         self.toAddress = toAddress
@@ -8,8 +10,9 @@ class Transaction:
         self.transFee = transFee
         self.timestamp = timestamp
         self.blockReward = blockReward
-        
-    def transction_to_dict(self):
+
+    # The function to convert Transaction object to dictionary
+    def trans_to_dict(self):
         data = {
             "t_id": self.transID,
             "t_sender": self.fromAddress,
@@ -21,4 +24,18 @@ class Transaction:
         }
         return data
     
+    @staticmethod
+    # The function to convert Dictionary to Transaction object
+    def dict_to_trans(data):
+
+        transID = data["t_id"]
+        fromAddress = data["t_sender"]
+        toAddress = data["t_receiver"]
+        amount = data["t_amount"]
+        blockReward = data["block_reward"]
+        transFee = data["t_fee"]
+        timestamp = data["t_time"]
+        newTrans = Transaction(fromAddress,toAddress,amount,timestamp,blockReward,transID=transID,transFee=transFee)
+
+        return newTrans
     

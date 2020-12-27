@@ -2,7 +2,8 @@ from hashlib import sha256
 import time
 from block import *
 from transactions import Transaction
-import uuid
+
+import secrets
 
 class Blockchain:
     # Class Constructor
@@ -14,33 +15,46 @@ class Blockchain:
     
     # The function for selecting 4 transaction to create new block
     def trans_selector(self, myAddress):
+        # tek trans basa ekle
+
         transactions = []
         if(len(self.unconfirmedTrans) < 4):
-            return False
+            return transactions
         else:
             # Creating new amount value for Reward transaction
             newAmount = 0
-        
-            # ??????? which transactions must be selected????? first 4?
+            for i in range(4):
+                newAmount += self.unconfirmedTrans[i].transFee
+            # Creating new trans for reward
+            rewardTrans = Transaction("XXXXXX", myAddress, newAmount, timestamp=time.time(), blockReward=True)
+            transactions.append(rewardTrans)
+            
+            # Selecting 4 transactions from the unconfirmed transaction to create new block
             for i in range(4):
                 transactions.append(self.unconfirmedTrans[i])
                 self.unconfirmedTrans.remove(self.unconfirmedTrans[i])
-                newAmount += self.unconfirmedTrans[i].transFee
-            
-            #?????????? trans fee??
-            rewardTrans =  Transaction(uuid.uuid4(), "XXXXXX", myAddress, newAmount, timestamp=time.time(), blockReward = True)
-            transactions.append(rewardTrans)
 
+        return transactions
+    
     # The function for creating new blocks
     def create_block(self, myAddress):
+        # Checking whether there is enough transaction to create new block
+        if not self.trans_selector(myAddress):
+            return False
+
+        
+        # Creating new block
+        transData = self.trans_selector(myAddress)
+        timestamp = time.time()
         newBlock = Block(
-            # burasi 4 tane +1 trans olucak 1 reward icin
-            # createblovk reward diye bi fonk olustur( yeni trans olus) (4 transdan address)( block reward true) (amount = 4*fee ) (sender = xxx default) (block olusturan kisinin adress)
-            transData =  self.trans_selector(myAddress),            
-            prevBlockHash = self.blocks[-1].blockHash,
-            proofNo = self.proof_checker(self.blocks[-1].proofNo),
-            timeStamp = time.time()
+            transData=transData,
+            prevBlockHash=self.blocks[-1].blockHash,
+            proofNo=self.proof_checker(self.blocks[-1].proofNo),
+            timestamp=timestamp,
+            transNum=len(transData),
+            blockHash = Block.generate_hash(transData,timestamp),
         )
+            
         # Incrementing confirmation number for other old blocks
         for block in self.blocks:
             block.confirmations += 1
@@ -50,7 +64,9 @@ class Blockchain:
 
     # The function for creating first block in chain
     def cons_initial_block(self):
-        self.blocks.append(Block("First Block",0,0,time.time()))
+        timestamp = time.time()
+        blockHash = Block.generate_hash("First Block",timestamp)
+        self.blocks.append(Block("First Block",0,0,timestamp,0,blockHash))
     
     # The function to check validity of all blocks in the chain
     def validity_checker(self):
@@ -140,21 +156,25 @@ class Blockchain:
             if(block.blockHash == newBlock.blockHash):
                 return False
         
-        # Checking there is any same transaction with chain and new block
-        for transBlock in newBlock.transData:
-            for transChain in self.unconfirmedTrans:
-                if(transBlock.transID == transChain.transID):
-                    # ?????
-                    self.unconfirmedTrans.remove(transChain)
-        
         # Checking there is any same transaction with new block and other blocks
         for transNewBlock in newBlock.transData:
             for block in self.blocks:
                 for transBlock in block.transData:
                     if(transNewBlock.transID == transBlock.transID):
-                        # ?????????
-                        pass
+                        return False
 
+        # Checking there is any same transaction with chain and new block
+        for transBlock in newBlock.transData:
+            for transChain in self.unconfirmedTrans:
+                if(transBlock.transID == transChain.transID):
+                    self.unconfirmedTrans.remove(transChain)
+
+        # Incrementing confirmation number for other old blocks
+        for block in self.blocks:
+            block.confirmations += 1
+        # Make new block's confirmation = 1
+        newBlock.confirmations = 1   
+        self.blocks.append(newBlock)           
         return True
         
 
