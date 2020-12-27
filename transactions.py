@@ -2,7 +2,7 @@ import secrets
 
 
 class Transaction:
-    def __init__(self, fromAddress, toAddress, amount, timestamp, blockReward, transID=secrets.randbits(64), transFee=0.001):
+    def __init__(self, fromAddress, toAddress, amount, timestamp, blockReward, transID, transFee=0.001):
         self.transID = transID
         self.fromAddress = fromAddress
         self.toAddress = toAddress

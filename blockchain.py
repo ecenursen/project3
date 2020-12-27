@@ -27,7 +27,7 @@ class Blockchain:
             for i in range(4):
                 newAmount += self.unconfirmedTrans[i].transFee
             # Creating new trans for reward
-            rewardTrans = Transaction("XXXXXX", myAddress, newAmount, timestamp=time.time(), blockReward=True)
+            rewardTrans = Transaction("XXXXXX", myAddress, newAmount, timestamp=time.time(), blockReward=True, transID=secrets.randbits(64))
             transactions.append(rewardTrans)
             
             # Selecting 4 transactions from the unconfirmed transaction to create new block

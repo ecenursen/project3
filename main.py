@@ -4,9 +4,10 @@ from time import sleep,gmtime,strftime,time
 from block import Block
 from transactions import Transaction
 from blockchain import Blockchain
+import secrets
 
 
-current_IP = "192.168.1.117"  
+current_IP = "192.168.202.1"  
 current_port = 4000
 peers = []
 
@@ -65,7 +66,7 @@ class BalanceInfo(Frame):
                 trans_fee = 0.001
             else:
                 trans_fee = float(trans_fee)
-            newTrans = Transaction(fromAddress=node.addr,toAddress=recv_addr,amount=float(trans_amount),timestamp=time(),blockReward=0,transFee=trans_fee)
+            newTrans = Transaction(fromAddress=node.addr,toAddress=recv_addr,amount=float(trans_amount),timestamp=time(),blockReward=0,transID = secrets.randbits(64),transFee=trans_fee)
             node.create_transaction(newTrans)
         
         for widget in self.winfo_children():
@@ -258,7 +259,7 @@ def start_peering():
     for peer in peers:
         node.connect_to_node(current_IP,peer)
     node.send_to_nodes({"func":"request_blocks"})
-    newTrans = Transaction(fromAddress="XXXXX",toAddress=node.addr,amount=25.0,timestamp=time(),blockReward=0)
+    newTrans = Transaction(fromAddress="XXXXX",toAddress=node.addr,amount=25.0,timestamp=time(),blockReward=0,transID=secrets.randbits(64))
     node.create_transaction(newTrans)
     return 
 
