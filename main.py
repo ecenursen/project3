@@ -1,11 +1,15 @@
 from HappyCoinNode import HappyCoinNode
 from tkinter import *
-from time import sleep
+from time import sleep,gmtime,strftime,time
+from block import Block
+from transactions import Transaction
+from blockchain import Blockchain
 
-current_IP = "192.168.1.129"  
+
+current_IP = "192.168.1.117"  
 current_port = 4000
 peers = []
-transactions = [["nsbdszfsddnf","kjbxfhdfhdfkjh","kknklm","kjbkjh","kknklm","kjbkjh","kknklm","kjbkjh","kknklm"], ["nsbdnf","kjbkjh","kknklm","kjbkjh","kknklm","kjbkjh","kknklm","kjbkjh","kknklm"], ["nsbdnf","kjbkjh","kknklm","kjbkjh","kknklm","kjbkjh","kknklm","kjbkjh","kknklm"], ["nsbdnf","kjbkjh","kknklm","kjbkjh","kknklm","kjbkjh","kknklm","kjbkjh","kknklm"], ["nsbdnf","kjbkjh","kknklm","kjbkjh","kknklm","kjbkjh","kknklm","kjbkjh","kknklm"], ["nsbdnf","kjbkjh","kknklm","kjbkjh","kknklm","kjbkjh","kknklm","kjbkjh","kknklm"], ["nsbdnf","kjbkjh","kknklm","kjbkjh","kknklm","kjbkjh","kknklm","kjbkjh","kknklm"], ["nsbdnf","kjbkjh","kknklm","kjbkjh","kknklm","kjbkjh","kknklm","kjbkjh","kknklm"], ["nsbdnf","kjbkjh","kknklm","kjbkjh","kknklm","kjbkjh","kknklm","kjbkjh","kknklm"], ["nsbdnf","kjbkjh","kknklm","kjbkjh","kknklm","kjbkjh","kknklm","kjbkjh","kknklm"], ["nsbdnf","kjbkjh","kknklm","kjbkjh","kknklm","kjbkjh","kknklm","kjbkjh","kknklm"], ["nsbdnf","kjbkjh","kknklm","kjbkjh","kknklm","kjbkjh","kknklm","kjbkjh","kknklm"], ["nsbdnf","kjbkjh","kknklm","kjbkjh","kknklm","kjbkjh","kknklm","kjbkjh","kknklm"]]
+
 class HappyCoin_App(Tk):
 
     def __init__(self, *args, **kwargs):  
@@ -57,10 +61,10 @@ class BalanceInfo(Frame):
         if recv_addr==None or recv_addr=="" or trans_amount==None or trans_amount=="":
             print("NULL")
         else:
-            print("PRINT REFRESH")
-            print("recv_addr:",recv_addr)
-            print("transaction amount:",trans_amount)
-            print("Transaction fee:",trans_fee)
+            if trans_fee == "" or trans_fee == " ":
+                trans_fee = 0.001
+            newTrans = Transaction(fromAddress=node.addr,toAddress=recv_addr,amount=float(trans_amount),timestamp=time(),blockReward=0,transFee=trans_fee)
+            node.create_transaction(newTrans)
         
         for widget in self.winfo_children():
             widget.destroy()
@@ -78,8 +82,10 @@ class BalanceInfo(Frame):
         text_frame = Frame(self)
         text_frame.grid(row=2,columnspan=3)
 
-        user_addr = "kekrekrek"
-        user_balance = 12
+        user_addr = node.addr
+        user_uncomfirmed_balance = node.blockchain.get_balance(node.addr,1)
+        user_comfirmed_balance = node.blockchain.get_balance(node.addr,0)
+
 
         receiver_addr = StringVar()
         trans_amount = StringVar()
@@ -90,10 +96,11 @@ class BalanceInfo(Frame):
 
         text_area = Text(text_frame)
         text_area.grid(row=0,column=0,pady=(0,4))
-        text_area.configure(height=6)
+        text_area.configure(height=7)
 
         text_area.insert(END,"\nYour address is " + user_addr)
-        text_area.insert(END,"\nYour current balance is " + str(user_balance))
+        text_area.insert(END,"\nYour confirmed balance is " + str(user_comfirmed_balance))
+        text_area.insert(END,"\nYour unconfirmed balance is " + str(user_uncomfirmed_balance))
         text_area.insert(END,"\n\nTo make transaction please enter receiver address, transaction amount and fee.")
         text_area.insert(END,"\nMinimum transaction fee is required. Minimum transaction fee is 0.001 HappyCoin ")
 
@@ -129,7 +136,6 @@ class UserTransactions(Frame):
     
     def load(self):
         
-        print("here i am")
         self.tkraise()
         for widget in self.winfo_children():
             widget.destroy()
@@ -147,7 +153,7 @@ class UserTransactions(Frame):
         transaction_area = Frame(self)
         transaction_area.grid(row=2,columnspan=3,pady=(5,0),sticky='nw')
 
-        transaction_table = Canvas(transaction_area,bg="white",width=800,height=900)
+        transaction_table = Canvas(transaction_area,bg="white",width=1300,height=900)
         transaction_table.grid(row=0,column=0,sticky="news")
 
         scroll_area = Scrollbar(transaction_area,orient="vertical", command=transaction_table.yview,)
@@ -157,17 +163,29 @@ class UserTransactions(Frame):
         table_frame = Frame(transaction_table,bg="blue")
         transaction_table.create_window((0,0),window=table_frame,anchor="nw")
 
+        transactions = node.blockchain.get_all_trans(node.addr)
         t_row = len(transactions)
-        if t_row != 0:
-            t_col = len(transactions[0])
-        else:
-            t_col = 0
-        labels = [[Label() for j in range(t_col)] for i in range(t_row)]
+        t_col = 5
+
+        labels = [[Label() for j in range(t_col)] for i in range(t_row+1)]
+
+        labels[0][0] = Label(table_frame,text="Transaction ID")
+        labels[0][1] = Label(table_frame,text="Sender")
+        labels[0][2] = Label(table_frame,text="Receiver")
+        labels[0][3] = Label(table_frame,text="Amount")
+        labels[0][4] = Label(table_frame,text="Time")
+
+        for j in range(0,t_col):
+            labels[0][j].grid(row=0,column=j,sticky="news")
 
         for i in range(0,t_row):
+            labels[i+1][0] = Label(table_frame,text=transactions[i].transID)
+            labels[i+1][1] = Label(table_frame,text=transactions[i].fromAddress)
+            labels[i+1][2] = Label(table_frame,text=transactions[i].toAddress)
+            labels[i+1][3] = Label(table_frame,text=transactions[i].amount)
+            labels[i+1][4] = Label(table_frame,text=strftime("%Y-%m-%d %H:%M:%S", gmtime(transactions[i].timestamp)))
             for j in range(0,t_col):
-                labels[i][j] = Label(table_frame,text=transactions[i][j])
-                labels[i][j].grid(row=i,column=j,sticky="news")
+                labels[i+1][j].grid(row=i,column=j,sticky="news")
 
         table_frame.update_idletasks()
 
@@ -199,7 +217,7 @@ class Blocks(Frame):
         block_area = Frame(self)
         block_area.grid(row=2,columnspan=3,pady=(5,0),sticky='nw')
 
-        block_table = Canvas(block_area,bg="white",width=800,height=900)
+        block_table = Canvas(block_area,bg="white",width=1300,height=900)
         block_table.grid(row=0,column=0,sticky="news")
 
         scroll_area = Scrollbar(block_area,orient="vertical", command=block_table.yview,)
@@ -209,17 +227,26 @@ class Blocks(Frame):
         table_frame = Frame(block_table,bg="blue")
         block_table.create_window((0,0),window=table_frame,anchor="nw")
 
-        t_row = len(transactions)
-        if t_row != 0:
-            t_col = len(transactions[0])
-        else:
-            t_col = 0
-        labels = [[Label() for j in range(t_col)] for i in range(t_row)]
+        blocks = node.return_blocks()[::-1]
+        t_row = len(blocks)
+        t_col = 4
+        
+        labels = [[Label() for j in range(t_col)] for i in range(t_row+1)]
+
+        labels[0][0] = Label(table_frame,text="Block Hash")
+        labels[0][1] = Label(table_frame,text="Block Time")
+        labels[0][2] = Label(table_frame,text="Number of Transaction")
+        labels[0][3] = Label(table_frame,text="No. Confirmation")
+        for j in range(0,t_col):
+            labels[0][j].grid(row=0,column=j,sticky="news")
       
         for i in range(0,t_row):
+            labels[i+1][0] = Label(table_frame,text=blocks[i].blockHash)
+            labels[i+1][1] = Label(table_frame,text=strftime("%Y-%m-%d %H:%M:%S", gmtime(blocks[i].timestamp)))
+            labels[i+1][2] = Label(table_frame,text=blocks[i].transNum)
+            labels[i+1][3] = Label(table_frame,text=blocks[i].confirmations)
             for j in range(0,t_col):
-                labels[i][j] = Label(table_frame,text=transactions[i][j])
-                labels[i][j].grid(row=i,column=j,sticky="news")
+                labels[i+1][j].grid(row=i+1,column=j,sticky="news")
 
         table_frame.update_idletasks()
 
@@ -229,6 +256,8 @@ def start_peering():
     for peer in peers:
         node.connect_to_node(current_IP,peer)
     node.send_to_nodes({"func":"request_blocks"})
+    newTrans = Transaction(fromAddress="XXXXX",toAddress=node.addr,amount=25.0,timestamp=time(),blockReward=0)
+    node.create_transaction(newTrans)
     return 
 
 if __name__=="__main__":
