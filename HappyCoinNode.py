@@ -25,10 +25,10 @@ class HappyCoinNode(threading.Thread):
 
         #for saving the copy of blockchain
         self.blockchain = Blockchain()
-
+        #for saving keys and addresses of the node
         self.privkey, self.publickey, self.addr = keys_address_generator()
 
-        # Start the TCP/IP server
+        # Start server
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.sock.bind((self.host, self.port))
@@ -81,7 +81,7 @@ class HappyCoinNode(threading.Thread):
             self.nodes_connected.append(thread_client)
 
         except Exception as e:
-            print("TcpServer.connect_with_node: Could not connect with node. (" + str(e) + ")")
+            print("Could not connect with node. (" + str(e) + ")")
 
     def disconnect_to_node(self, node):
         if node in self.nodes_connected:
@@ -90,10 +90,9 @@ class HappyCoinNode(threading.Thread):
             del self.nodes_connected[self.nodes_connected.index(node)]
 
         else:
-            print("HappyCoinNode disconnect_with_node: cannot disconnect with a node with which we are not connected.")
+            print("Cannot disconnect with a node with which we are not connected.")
 
     def stop(self):
-        """Stop this node and terminate all the connected nodes."""
         self.awake.set()
 
     def run(self):
@@ -111,7 +110,9 @@ class HappyCoinNode(threading.Thread):
                 self.nodes_connected.append(thread_client)
                 
             except socket.timeout:
-                self.blockchain.block_miner(self.addr)
+                new_b = self.blockchain.block_miner(self.addr)
+                if new_b != False:
+                    self.send_new_block(new_b)
                 print("lend:",len(self.return_blocks()))
                 print('HappyCoinNode: Connection timeout!')
 
@@ -133,6 +134,7 @@ class HappyCoinNode(threading.Thread):
         self.sock.close()
         print("HappyCoinNode stopped")
 
+    # function for handling the received message
     def received_message(self, node, data):
         if data["func"] == "request_blocks":
             self.send_start_blocks(node)
@@ -148,8 +150,13 @@ class HappyCoinNode(threading.Thread):
 
     # function for returning the blocks that node has
     def return_blocks(self):
-        ret_blocks = self.blockchain.blocks
-        ret_blocks.remove(self.blockchain.blocks[0])
+        print("return_len:",len(self.blockchain.blocks))
+        if len(self.blockchain.blocks) == 0:
+            return []
+        ret_blocks = self.blockchain.blocks[1:]
+        for blocks in self.blockchain.blocks:
+            print("trans:",blocks.transData)
+        print("blocks:",self.blockchain.blocks[1:])
         return ret_blocks
 
     #function for returning the unadded_transaction that node has 
@@ -157,7 +164,7 @@ class HappyCoinNode(threading.Thread):
         return self.blockchain.unconfirmedTrans
 
     def send_new_block(self,new_block):
-        self.send_to_node(node,{"func":"new_block","block":new_block.block_to_dict()})
+        self.send_to_nodes({"func":"new_block","block":new_block.block_to_dict()})
         time.sleep(0.5)
 
     def recv_new_block(self,block):
@@ -167,10 +174,12 @@ class HappyCoinNode(threading.Thread):
         else:
             print("Received block has problems")
 
+    #function for sending new transaction to all peers
     def send_new_transaction(self,new_trans):
         self.send_to_nodes({"func":"new_transaction","trans":new_trans.trans_to_dict()})
         time.sleep(0.5)
 
+    #function for adding the newly received transaction to node
     def recv_new_transaction(self,trans):
         result = self.blockchain.add_trans_outside(trans)
         if result:
@@ -178,6 +187,7 @@ class HappyCoinNode(threading.Thread):
         else:
             print("Received transaction has problems")
 
+    #function for sending all blocks and transaction to newly connected peer
     def send_start_blocks(self,nodez):
         data = {"func": "start_sending_blocks"}
         self.send_to_node(nodez,data)

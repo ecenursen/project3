@@ -1,15 +1,17 @@
 from HappyCoinNode import HappyCoinNode
 from tkinter import *
 from time import sleep,gmtime,strftime,time
+import secrets
 from block import Block
 from transactions import Transaction
 from blockchain import Blockchain
 
-
+#some static variables for ip and ports
 current_IP = "192.168.1.117"  
 current_port = 4000
 peers = []
 
+#for creating app
 class HappyCoin_App(Tk):
 
     def __init__(self, *args, **kwargs):  
@@ -60,17 +62,19 @@ class BalanceInfo(Frame):
 
         if recv_addr==None or recv_addr=="" or trans_amount==None or trans_amount=="":
             print("NULL")
-        else:
+        else: # for creating new transction
             if trans_fee == "" or trans_fee == " ":
                 trans_fee = 0.001
             else:
                 trans_fee = float(trans_fee)
-            newTrans = Transaction(fromAddress=node.addr,toAddress=recv_addr,amount=float(trans_amount),timestamp=time(),blockReward=0,transFee=trans_fee)
+            newTrans = Transaction(fromAddress=node.addr,toAddress=recv_addr,amount=float(trans_amount),timestamp=time(),blockReward=0,transID = secrets.randbits(64),transFee=trans_fee)
             node.create_transaction(newTrans)
-        
+
+        #destroy old frame to renew
         for widget in self.winfo_children():
             widget.destroy()
-
+        #creating new frames to show
+            #buttons
         button1 = Button(self, text ="BalanceInfo", relief="sunken", 
         command = lambda : self.cont.show_frame(BalanceInfo)) 
         button1.grid(row = 0, column = 0, pady=(0,0))
@@ -81,6 +85,7 @@ class BalanceInfo(Frame):
         command = lambda : self.cont.show_frame(Blocks)) 
         button3.grid(row = 0, column = 2, pady=(0,0))
           
+            #text frame
         text_frame = Frame(self)
         text_frame.grid(row=2,columnspan=3)
 
@@ -88,7 +93,7 @@ class BalanceInfo(Frame):
         user_uncomfirmed_balance = node.blockchain.get_balance(node.addr,1)
         user_comfirmed_balance = node.blockchain.get_balance(node.addr,0)
 
-
+            #create transaction frame
         receiver_addr = StringVar()
         trans_amount = StringVar()
         trans_fee = StringVar()
@@ -139,9 +144,12 @@ class UserTransactions(Frame):
     def load(self):
         
         self.tkraise()
+        #destroy old frame to renew
         for widget in self.winfo_children():
             widget.destroy()
 
+        #creating new frames to show
+            #buttons
         button1 = Button(self, text ="BalanceInfo",relief=RAISED, 
         command = lambda : self.cont.show_frame(BalanceInfo)) 
         button1.grid(row = 0, column = 0, pady=(0,0))
@@ -152,6 +160,7 @@ class UserTransactions(Frame):
         command = lambda : self.cont.show_frame(Blocks)) 
         button3.grid(row = 0, column = 2, pady=(0,0))
 
+            # transaction table frame
         transaction_area = Frame(self)
         transaction_area.grid(row=2,columnspan=3,pady=(5,0),sticky='nw')
 
@@ -165,7 +174,7 @@ class UserTransactions(Frame):
         table_frame = Frame(transaction_table,bg="blue")
         transaction_table.create_window((0,0),window=table_frame,anchor="nw")
 
-        transactions = node.blockchain.get_all_trans(node.addr)
+        transactions = node.blockchain.get_all_trans(node.addr)[::-1]
         t_row = len(transactions)
         t_col = 5
 
@@ -202,10 +211,12 @@ class Blocks(Frame):
     
     def load(self):
         self.tkraise()
-
+        #destroy old frame to renew
         for widget in self.winfo_children():
             widget.destroy()
 
+        #creating new frames to show
+            #buttons
         button1 = Button(self, text ="BalanceInfo", relief=RAISED, 
         command = lambda : self.cont.show_frame(BalanceInfo)) 
         button1.grid(row = 0, column = 0, pady=(0,0))
@@ -216,6 +227,7 @@ class Blocks(Frame):
         command = lambda : self.cont.show_frame(Blocks)) 
         button3.grid(row = 0, column = 2, pady=(0,0))
 
+            #block table frame
         block_area = Frame(self)
         block_area.grid(row=2,columnspan=3,pady=(5,0),sticky='nw')
 
@@ -230,6 +242,8 @@ class Blocks(Frame):
         block_table.create_window((0,0),window=table_frame,anchor="nw")
 
         blocks = node.return_blocks()[::-1]
+        if blocks != []:
+            print("table blocks trans:",blocks[0].transData)
         t_row = len(blocks)
         t_col = 4
         
@@ -253,12 +267,13 @@ class Blocks(Frame):
         table_frame.update_idletasks()
 
         block_table.config(scrollregion=block_table.bbox("all"))
-        
+
+#function that will be called when starting p2p network     
 def start_peering():
     for peer in peers:
         node.connect_to_node(current_IP,peer)
     node.send_to_nodes({"func":"request_blocks"})
-    newTrans = Transaction(fromAddress="XXXXX",toAddress=node.addr,amount=25.0,timestamp=time(),blockReward=0)
+    newTrans = Transaction(fromAddress="XXXXX",toAddress=node.addr,amount=25.0,timestamp=time(),blockReward=0,transID=secrets.randbits(64))
     node.create_transaction(newTrans)
     return 
 
@@ -269,27 +284,3 @@ if __name__=="__main__":
     app.title("HappyCoin")
     app.mainloop() 
     node.stop()
-
-"""
-node1 = HappyCoinNode(current_IP2,available_ports[0])
-node2 = HappyCoinNode(current_IP2,available_ports[1])
-node3 = HappyCoinNode(current_IP2,available_ports[2])
-
-print("nodes created")
-
-node1.start()
-node2.start()
-node3.start()
-
-node1.connect_to_node(current_IP2,available_ports[1])
-node1.connect_to_node(current_IP2,available_ports[2])
-node3.connect_to_node(current_IP2,available_ports[1])
-
-node1.send_to_nodes({"a":12})
-node2.send_to_nodes({"b":23})
-node3.send_to_nodes({"c":34})
-
-node1.stop()
-node2.stop()
-node3.stop()
-"""

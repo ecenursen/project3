@@ -33,7 +33,7 @@ class HappyCoinConnection(threading.Thread):
         self.awake.set()
 
     def run(self):
-        self.sock.settimeout(5.0)          
+        self.sock.settimeout(15.0)          
 
         while not self.awake.is_set():
             incoming_data = b''

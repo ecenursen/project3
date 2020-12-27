@@ -27,14 +27,14 @@ class Blockchain:
             for i in range(4):
                 newAmount += self.unconfirmedTrans[i].transFee
             # Creating new trans for reward
-            rewardTrans = Transaction("XXXXXX", myAddress, newAmount, timestamp=time.time(), blockReward=True)
+            rewardTrans = Transaction("XXXXXX", myAddress, newAmount, timestamp=time.time(), blockReward=True, transID=secrets.randbits(64))
             transactions.append(rewardTrans)
             
             # Selecting 4 transactions from the unconfirmed transaction to create new block
             for i in range(4):
                 transactions.append(self.unconfirmedTrans[0])
                 self.unconfirmedTrans.remove(self.unconfirmedTrans[0])
-
+        print("block transactions:",transactions)
         return transactions
 
     # The function for creating first block in chain
@@ -174,14 +174,13 @@ class Blockchain:
 
     def block_miner(self, minerAddress):
         # Checking whether there is enough transaction to create new block
-        if not self.trans_selector(minerAddress):
+        transData = self.trans_selector(minerAddress)
+        if transData == []:
             return False
         
-        # Getting 4+1 trans
-        transData = self.trans_selector(minerAddress)
         # Finding block hash by iterating
         blockHash = self.mine_block(transData,5)
-        print("self blocks:",self.blocks)
+        print("ZZZself blocks trans data:",transData)
         newBlock = Block(
             transData=transData,
             prevBlockHash=self.blocks[-1].blockHash,
@@ -195,7 +194,7 @@ class Blockchain:
         # Adding new block to Chain
         print("newblock:",newBlock)
         self.blocks.append(newBlock)
-
+        print("NEW BLOCK TRANS DATA:",newBlock.transData)
         return newBlock
 
 def keys_address_generator():

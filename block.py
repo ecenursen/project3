@@ -30,7 +30,7 @@ class Block:
     def block_to_dict(self):
         transactions = []
         for trans in self.transData:
-            transactions.append(trans.transaction_to_dict())
+            transactions.append(trans.trans_to_dict())
         data = {
             "b_hash": self.blockHash,
             "b_time": self.timestamp,
