@@ -112,6 +112,7 @@ class HappyCoinNode(threading.Thread):
                 
             except socket.timeout:
                 self.blockchain.block_miner(self.addr)
+                print("lend:",len(self.return_blocks()))
                 print('HappyCoinNode: Connection timeout!')
 
             except Exception as e:

@@ -181,6 +181,7 @@ class Blockchain:
         transData = self.trans_selector(minerAddress)
         # Finding block hash by iterating
         blockHash = self.mine_block(transData,5)
+        print("self blocks:",self.blocks)
         newBlock = Block(
             transData=transData,
             prevBlockHash=self.blocks[-1].blockHash,
