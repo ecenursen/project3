@@ -25,8 +25,7 @@ class HappyCoinNode(threading.Thread):
 
         #for saving the copy of blockchain
         self.blockchain = Blockchain()
-        #for saving keys and addresses of the node
-        self.privkey, self.publickey, self.addr = keys_address_generator()
+        self.creating_node_addresses()
 
         # Start server
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -34,6 +33,28 @@ class HappyCoinNode(threading.Thread):
         self.sock.bind((self.host, self.port))
         self.sock.settimeout(12.0)
         self.sock.listen(12)
+
+    #for creating the addresses and keys
+    #if node is previously created then it reads keys and addresses from file
+    def creating_node_addresses(self):
+        try:
+            f = open("wallet.txt", mode='r+', encoding='utf-8')
+            lines = f.readlines()
+            self.privkey = lines[0].split("\n")[0]
+            self.publickey = lines[1].split("\n")[0]
+            self.addr = lines[2].split("\n")[0]
+            self.receive_gift = False
+            f.close()
+        except:
+            self.receive_gift = True
+            self.privkey, self.publickey, self.addr = keys_address_generator()
+            f = open("wallet.txt", mode='w+', encoding='utf-8')
+            f.write(self.privkey+"\n")
+            f.write(self.publickey+"\n")
+            f.write(self.addr+"\n")
+            f.close()
+
+
 
     def delete_closed_connections(self):
         for n in self.nodes_connected:
@@ -110,9 +131,14 @@ class HappyCoinNode(threading.Thread):
                 self.nodes_connected.append(thread_client)
                 
             except socket.timeout:
-                new_b = self.blockchain.block_miner(self.addr)
-                if new_b != False:
-                    self.send_new_block(new_b)
+                #mining
+                
+                mined_block = self.blockchain.block_miner(self.addr)
+                print("MINED BLOCK:",mined_block)
+                if mined_block != False:
+                    print("NOT FALSE")
+                    self.send_new_block(mined_block)
+                
                 print("lend:",len(self.return_blocks()))
                 print('HappyCoinNode: Connection timeout!')
 
@@ -141,6 +167,7 @@ class HappyCoinNode(threading.Thread):
         elif data["func"] == "new_transaction":
             self.recv_new_transaction(Transaction.dict_to_trans(data["trans"]))
         elif data["func"] == "new_block":
+            print("RECEIVED A NEW BLOCK")
             self.recv_new_block(Block.dict_to_block(data["block"]))
         elif data["func"] == "start_sending_blocks" or data["func"] == "end_sending_blocks":
             print("Blocks incoming")
@@ -165,10 +192,12 @@ class HappyCoinNode(threading.Thread):
 
     def send_new_block(self,new_block):
         self.send_to_nodes({"func":"new_block","block":new_block.block_to_dict()})
+        print("I SEND THE NEW BLOCK")
         time.sleep(0.5)
 
-    def recv_new_block(self,block):
-        result = self.blockchain.add_block_outside(block)
+    def recv_new_block(self,nBlock):
+        print("RECEIVE NEW BLOCK OUTSIDE:",nBlock)
+        result = self.blockchain.add_block_outside(nBlock)
         if result:
             print("Received a new block successfully")
         else:

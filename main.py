@@ -5,11 +5,10 @@ import secrets
 from block import Block
 from transactions import Transaction
 from blockchain import Blockchain
-import secrets
 
 #some static variables for ip and ports
-current_IP = "192.168.202.1"  
-current_port = 4000
+current_IP = "192.168.1.117"  
+current_port = 3000
 peers = []
 
 #for creating app
@@ -68,6 +67,9 @@ class BalanceInfo(Frame):
                 trans_fee = 0.001
             else:
                 trans_fee = float(trans_fee)
+                if trans_fee < 0.001:
+                    print("given fee is insufficent")
+                    trans_fee = 0.001
             newTrans = Transaction(fromAddress=node.addr,toAddress=recv_addr,amount=float(trans_amount),timestamp=time(),blockReward=0,transID = secrets.randbits(64),transFee=trans_fee)
             node.create_transaction(newTrans)
 
@@ -186,7 +188,6 @@ class UserTransactions(Frame):
         labels[0][2] = Label(table_frame,text="Receiver")
         labels[0][3] = Label(table_frame,text="Amount")
         labels[0][4] = Label(table_frame,text="Time")
-
         for j in range(0,t_col):
             labels[0][j].grid(row=0,column=j,sticky="news")
 
@@ -197,7 +198,7 @@ class UserTransactions(Frame):
             labels[i+1][3] = Label(table_frame,text=transactions[i].amount)
             labels[i+1][4] = Label(table_frame,text=strftime("%Y-%m-%d %H:%M:%S", gmtime(transactions[i].timestamp)))
             for j in range(0,t_col):
-                labels[i+1][j].grid(row=i,column=j,sticky="news")
+                labels[i+1][j].grid(row=i+1,column=j,sticky="news")
 
         table_frame.update_idletasks()
 
@@ -274,8 +275,9 @@ def start_peering():
     for peer in peers:
         node.connect_to_node(current_IP,peer)
     node.send_to_nodes({"func":"request_blocks"})
-    newTrans = Transaction(fromAddress="XXXXX",toAddress=node.addr,amount=25.0,timestamp=time(),blockReward=0,transID=secrets.randbits(64))
-    node.create_transaction(newTrans)
+    if node.receive_gift:
+        newTrans = Transaction(fromAddress="XXXXX",toAddress=node.addr,amount=25.0,timestamp=time(),blockReward=0,transID=secrets.randbits(64))
+        node.create_transaction(newTrans)
     return 
 
 if __name__=="__main__":

@@ -120,6 +120,8 @@ class Blockchain:
         # Checking there is any same transaction with new block and other blocks
         for transNewBlock in newBlock.transData:
             for block in self.blocks:
+                if block == self.blocks[0]:
+                    continue
                 for transBlock in block.transData:
                     if(transNewBlock.transID == transBlock.transID):
                         return False
@@ -147,9 +149,12 @@ class Blockchain:
                 if newTrans.transID == trans.transID:
                     print("from here",newTrans.transID)
                     return False
+        for transz in self.unconfirmedTrans:
+            if newTrans.transID == transz.transID:
+                print("unconfirmed from here",newTrans.transID)
+                return False
 
         sender_balance = self.get_balance(newTrans.fromAddress,1)
-
         if sender_balance < (newTrans.amount + newTrans.transFee):
             if newTrans.fromAddress == "XXXXX":
                 self.add_transaction(newTrans)
